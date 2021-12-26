@@ -1,0 +1,24 @@
+
+
+
+docker-compose up
+
+docker-compose exec xmpp-server bin/ejabberdctl register admin localhost admin
+
+docker-compose exec xmpp-server bin/ejabberdctl register muly localhost muly
+docker-compose exec xmpp-server bin/ejabberdctl register sandeep localhost sandeep
+
+
+docker-compose exec xmpp-server bin/ejabberdctl oauth_issue_token admin@localhost 33334444 ejabberd:admin
+
+docker exec -it xmpp-server /bin/sh
+
+admin portal: 
+    http://localhost:5280/admin/
+    http://localhost:5443/admin/
+
+ netstat -ant | grep 5443
+
+reference:
+    Xmpp Server Setup in Docker with Ejabberd: https://www.youtube.com/watch?v=mk5v_VtUzhs
+    
