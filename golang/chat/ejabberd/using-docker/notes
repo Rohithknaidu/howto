@@ -26,14 +26,14 @@ ejabberdctl locally :::::::::::::
 
     docker exec -it ejabberd-server /bin/sh
 
-    generate cert: 
+    generate cert (if using port 5443 for api): 
         cd ~
-openssl dhparam -out dh2048.pem 2048
-openssl genrsa -out localhost-ejabberd.key 2048
-openssl req -out localhost-ejabberd.csr -key localhost-ejabberd.key -new -sha256
-openssl x509 -req -days 365 -in localhost-ejabberd.csr -signkey localhost-ejabberd.key -out localhost-ejabberd.crt
-cat localhost-ejabberd.crt >  localhost-ejabberd.pem
-cat localhost-ejabberd.key >> localhost-ejabberd.pem
+        openssl dhparam -out dh2048.pem 2048
+        openssl genrsa -out localhost-ejabberd.key 2048
+        openssl req -out localhost-ejabberd.csr -key localhost-ejabberd.key -new -sha256
+        openssl x509 -req -days 365 -in localhost-ejabberd.csr -signkey localhost-ejabberd.key -out localhost-ejabberd.crt
+        cat localhost-ejabberd.crt >  localhost-ejabberd.pem
+        cat localhost-ejabberd.key >> localhost-ejabberd.pem
 
     update certs in config:
         vi /home/ejabberd/conf/ejabberd.yml
@@ -41,9 +41,9 @@ cat localhost-ejabberd.key >> localhost-ejabberd.pem
             certfiles:
             - /home/ejabberd/conf/server.pem
         with 
-certfiles:
-#  - /home/ejabberd/conf/server.pem
-- /home/ejabberd/localhost-ejabberd.pem
+            certfiles:
+            #  - /home/ejabberd/conf/server.pem
+            - /home/ejabberd/localhost-ejabberd.pem
 
         replace 
             listen:                                                   
@@ -57,18 +57,18 @@ certfiles:
                 starttls_required: true 
 
         with 
-listen:                                                   
--                                                       
-    port: 5222                                            
-    ip: "::"                                              
-    module: ejabberd_c2s                                  
-    max_stanza_size: 262144                               
-    shaper: c2s_shaper                                    
-    access: c2s                                           
-    starttls_required: true                                      
-    starttls: true                                     
-    tls_compression: false                                
-    dhfile: "/home/ejabberd/dh2048.pem" 
+            listen:                                                   
+            -                                                       
+                port: 5222                                            
+                ip: "::"                                              
+                module: ejabberd_c2s                                  
+                max_stanza_size: 262144                               
+                shaper: c2s_shaper                                    
+                access: c2s                                           
+                starttls_required: true                                      
+                starttls: true                                     
+                tls_compression: false                                
+                dhfile: "/home/ejabberd/dh2048.pem" 
 
 
     cd /home/ejabberd/bin/

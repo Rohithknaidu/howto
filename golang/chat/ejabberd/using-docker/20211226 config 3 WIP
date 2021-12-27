@@ -20,7 +20,7 @@ curl -X POST \
 }'
 0
 
-
+Next: though the response if 200 OK and value 0, we are not able to see the messages in admin portal
 
 
 
