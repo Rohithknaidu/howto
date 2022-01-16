@@ -1,128 +1,38 @@
-notes:
-
-
-
-
-
-admin portal: 
-    http://localhost:5280/admin/
-    https://localhost:5443/admin/   (then click on allow not secure)
-
-reverse search on terminal: control + r
-
-
-
 ejabberdctl locally :::::::::::::
     docker pull ejabberd/ecs
 
     docker run -p 5280:5280 -p 5443:5443 --name ejabberd-server ejabberd/ecs
-        note: need to expose other required ports for the client to be able to connect
-
-    
-
-    docker ps
-        CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                                                                                              NAMES
-        d2d339ba7988   ejabberd/ecs   "/home/ejabberd/bin/…"   20 seconds ago   Up 19 seconds   1883/tcp, 4369-4399/tcp, 5222/tcp, 5269/tcp, 5443/tcp, 0.0.0.0:5280->5280/tcp, :::5280->5280/tcp   ejabberd-server
 
     docker exec -it ejabberd-server /bin/sh
 
-    generate cert (if using port 5443 for api): 
-        cd ~
-        openssl dhparam -out dh2048.pem 2048
-        openssl genrsa -out localhost-ejabberd.key 2048
-        openssl req -out localhost-ejabberd.csr -key localhost-ejabberd.key -new -sha256
-        openssl x509 -req -days 365 -in localhost-ejabberd.csr -signkey localhost-ejabberd.key -out localhost-ejabberd.crt
-        cat localhost-ejabberd.crt >  localhost-ejabberd.pem
-        cat localhost-ejabberd.key >> localhost-ejabberd.pem
-
-    update certs in config:
-        vi /home/ejabberd/conf/ejabberd.yml
-        replace
-            certfiles:
-            - /home/ejabberd/conf/server.pem
-        with 
-            certfiles:
-            #  - /home/ejabberd/conf/server.pem
-            - /home/ejabberd/localhost-ejabberd.pem
-
-        replace 
-            listen:                                                   
-            -                                                       
-                port: 5222                                            
-                ip: "::"                                              
-                module: ejabberd_c2s                                  
-                max_stanza_size: 262144                               
-                shaper: c2s_shaper                                    
-                access: c2s                                           
-                starttls_required: true 
-
-        with 
-            listen:                                                   
-            -                                                       
-                port: 5222                                            
-                ip: "::"                                              
-                module: ejabberd_c2s                                  
-                max_stanza_size: 262144                               
-                shaper: c2s_shaper                                    
-                access: c2s                                           
-                starttls_required: true                                      
-                starttls: true                                     
-                tls_compression: false                                
-                dhfile: "/home/ejabberd/dh2048.pem" 
-
-
     cd /home/ejabberd/bin/
-
-    ./ejabberdctl restart
 
     ./ejabberdctl register admin localhost admin
 
-    ./ejabberdctl register muly localhost muly
-    ./ejabberdctl register sandeep localhost sandeep
+    ./ejabberdctl registered_users localhost
+        admin
+        muly
+        sandeep
 
     ./ejabberdctl oauth_issue_token admin@localhost 33334444 ejabberd:admin
+        Error when access is not configured    
+            Error: error
+            Error: access_denied
 
-    ./ejabberdctl registered_users localhost
+        solution: add the below top level option in config file
+            oauth_access: all
 
+        B1aHcXEVCPrm86pGuMN29YrjTlWpyuOd        [<<"ejabberd:admin">>]  33334444 seconds
 
-    config file: /home/ejabberd/conf/ejabberd.yml
+        read more: https://docs.ejabberd.im/developer/ejabberd-api/oauth/#authorization-token
 
-access using api :
-    https://docs.ejabberd.im/developer/ejabberd-api/admin-api/#send-message
+    ./ejabberdctl send_message 
+        ./ejabberdctl send_message chat MULY@localhost sandeep@localhost "subject 1" "HELLO MESSAGE"
 
-        curl -i -X POST \
-        http://localhost:5443/api/send_message \
-        -H 'Authorization: Basic YWRtaW5AbG9jYWxob3N0OmFkbWlu' \
-        -H 'Content-Type: application/javascript' \
-        -H 'Postman-Token: e9cab5d8-0b0d-4ca4-8d2c-08d6257518d5' \
-        -H 'cache-control: no-cache' \
-        -d '  {
-            "type": "headline",
-            "from": "admin@localhost",
-            "to": "srini@localhost",
-            "subject": "Restart",
-            "body": "In 5 minutes"
-            }'
+            https://localhost:5443/admin/server/localhost/users/
+            User	            Offline Messages	Last Activity
+            admin@localhost	    0	                2022-01-15 21:05:59
+            muly@localhost	    0	                2022-01-15 21:06:37
+            sandeep@localhost	1	                2022-01-15 21:06:38
 
 
-    api help videos: 
-        Xmpp Server Setup in Docker with Ejabberd: https://www.youtube.com/watch?v=mk5v_VtUzhs
-        Setting Up an XMPP Server with ejabberd: https://youtu.be/nujlwxnYtBg
-         https://miyako.github.io/2019/11/28/4d-plugin-strophe.html
-
-android client app:
-    Xabber by "redsolution OÜ": https://play.google.com/store/apps/details?id=com.xabber.android&hl=en_US&gl=US
-
-    js web client: 
-        https://strophe.im/strophejs/
-
-
-open connection:
-    what is c2s module?
-
-    https://github.com/strophe/strophejs.git
-
-   netstat -ant | grep 5443
-
-temp:
-    /home/ejabberd/localhost-ejabberd.pem

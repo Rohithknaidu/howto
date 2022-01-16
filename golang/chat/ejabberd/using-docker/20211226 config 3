@@ -10,7 +10,7 @@ curl -X GET \
 
 curl -X POST \
   http://localhost:5280/api/send_message \
-  -H 'Authorization: Basic YWRtaW5AbG9jYWxob3N0OmFkbWlu' \
+  -H 'Authorization: Basic WeoNGutJqROiprkkcHow0LdUYzbqgZef' \
   -d '{
   "type": "headline",
   "from": "muly@localhost",
