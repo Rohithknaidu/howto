@@ -58,7 +58,24 @@ to test a single feature, provide the relative path of the corresponding feature
 godog features/google.feature
 ```
 
+sample output:
+```
+s@mulys-new-mbp hello-cucumber % godog
+Feature: get google query
+
+  Scenario: should return google search results                           # features/google.feature:5
+    When I sent "GET" request to "https://www.google.com/search?q=golang" # google_test.go:18 -> *apiFeature
+    Then the response code should be 200                                  # google_test.go:33 -> *apiFeature
+
+1 scenarios (1 passed)
+2 steps (2 passed)
+308.913146ms
+s@mulys-new-mbp hello-cucumber % 
+```
+
 # references:
 
 inspired by the example: https://github.com/cucumber/godog/tree/main/_examples/api
+
+
 

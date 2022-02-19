@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/cucumber/godog"
+
+	"github.com/muly/howto/golang/testing/bdd/cucumber/godog/hello-cucumber3/e2e"
 )
 
 func TestMain(m *testing.M) {
@@ -11,11 +13,11 @@ func TestMain(m *testing.M) {
 
 	suite := godog.TestSuite{
 		ScenarioInitializer: func(s *godog.ScenarioContext) {
-			InitializeScenario(s)
+			e2e.InitializeScenario(s)
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
-			Paths:    []string{"features"},
+			Paths:    []string{"e2e/features"},
 			TestingT: t, 
 		},
 	}
