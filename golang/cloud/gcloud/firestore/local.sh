@@ -19,4 +19,4 @@ fi
 
 gcloud beta emulators firestore start --host-port=localhost:$emulatorPort &
 sleep 10
-PORT="8080" GCP_PROJECT="patch-emulator-project" FIRESTORE_EMULATOR_HOST="localhost:$emulatorPort" bash -c './firestore'
+GCP_PROJECT="patch-emulator-project" FIRESTORE_EMULATOR_HOST="localhost:$emulatorPort" bash -c './firestore'
