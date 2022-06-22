@@ -8,7 +8,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +20,7 @@ var (
 	dbClient       *firestore.Client
 	ctx            context.Context
 	collectionName = "users"
-	id             = "123"
+	idConst        = "123"
 )
 
 type User struct {
@@ -31,7 +30,6 @@ type User struct {
 	Department string `json:"department"`
 }
 
-type MapData map[string]interface{}
 
 func Init() {
 	ctx = context.TODO()
@@ -46,7 +44,7 @@ func Init() {
 	}
 
 	user := User{
-		UserID:     id,
+		UserID:     idConst,
 		Name:       "test_01",
 		Email:      "test@email.com",
 		Department: "testing",
@@ -70,52 +68,42 @@ func main() {
 }
 
 func patchUser(w http.ResponseWriter, r *http.Request) {
-	updateInput := MapData{
+	updateInput := map[string]interface{}{
 		"name": "test_01_testing",
 	}
-	updatedUser := patch(w, r, ctx, id, updateInput)
+	updatedUser, err := patch(w, r, idConst, updateInput)
+	if err != nil {
+		http.Error(w, "error patching user", http.StatusInternalServerError)
+	}
 	response, err := json.Marshal(updatedUser)
 	if err != nil {
-		http.Error(w, "error updating user", http.StatusInternalServerError)
+		http.Error(w, "error marshalling updatedUser", http.StatusInternalServerError)
 		return
 	}
+	if len(response) == 0 {
+		response = []byte("no record is returned")
+	}
+
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(response)
 }
 
-func patch(w http.ResponseWriter, r *http.Request, ctx context.Context, id string, input MapData) (updatedUser User) {
-	err := dbClient.RunTransaction(ctx, func(ctx context.Context, t *firestore.Transaction) error {
-		doc, _ := t.Get(dbClient.Collection(collectionName).Doc(id))
-		if doc.Ref.ID != id {
-			return fmt.Errorf("ids do not match...%v", id)
-		}
-		log.Println("ids matched...", id)
-		batch := dbClient.Batch()
-		batch.Set(dbClient.Collection(collectionName).Doc(id), input, firestore.MergeAll)
-		_, err := batch.Commit(ctx)
-		if err != nil {
-			// ERROR: com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
-			log.Println("batch commit error :", err)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		log.Println("transaction batch set error :", err)
-		http.Error(w, "batch Set error ", http.StatusInternalServerError)
-		return User{}
+func patch(w http.ResponseWriter, r *http.Request, id string, input map[string]interface{}) (User, error) {
+	// batch commit method
+	batch := dbClient.Batch()
+	docRef := dbClient.Collection(collectionName).Doc(id)
+	batch.Set(docRef, input, firestore.MergeAll)
+	if _, err := batch.Commit(ctx); err != nil {
+		return User{}, err
 	}
 
+	// return updated user details
+	updatedUser := User{}
 	doc, err := dbClient.Collection(collectionName).Doc(id).Get(ctx)
 	if err != nil {
-		http.Error(w, "error getting user from patch", http.StatusInternalServerError)
-		return User{}
+		return User{}, err
 	}
-	err = doc.DataTo(&updatedUser)
-	if err != nil {
-		http.Error(w, "error mapping doc to user", http.StatusInternalServerError)
-		return User{}
-	}
+	doc.DataTo(&updatedUser)
 
-	return updatedUser
+	return updatedUser, nil
 }
