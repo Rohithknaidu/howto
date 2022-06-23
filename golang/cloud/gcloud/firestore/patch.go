@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 
 	"cloud.google.com/go/firestore"
 	"github.com/gorilla/mux"
@@ -20,19 +21,18 @@ var (
 	dbClient       *firestore.Client
 	ctx            context.Context
 	collectionName = "users"
-	idConst        = "123"
+	id             = "1234"
 )
 
 type User struct {
-	UserID     string `json:"user_id"`
-	Name       string `json:"name"`
-	Email      string `json:"email"`
-	Department string `json:"department"`
+	UserID     string `json:"id" firestore:"id"`
+	Name       string `json:"name" firestore:"name"`
+	Email      string `json:"email" firestore:"email"`
+	Department string `json:"department" firestore:"department"`
 }
 
-
 func Init() {
-	ctx = context.TODO()
+	ctx = context.Background()
 	projectID := os.Getenv("GCP_PROJECT")
 	if projectID == "" {
 		projectID = firestore.DetectProjectID
@@ -43,17 +43,18 @@ func Init() {
 		log.Fatalf("Failed to create firestore client: %v", err)
 	}
 
+	// post one user for patch
 	user := User{
-		UserID:     idConst,
+		UserID:     id,
 		Name:       "test_01",
 		Email:      "test@email.com",
 		Department: "testing",
 	}
 	_, err = dbClient.Collection(collectionName).Doc(user.UserID).Set(ctx, user)
 	if err != nil {
-		log.Println("error adding user")
-
+		log.Panic("postUser: post error:", err)
 	}
+	log.Println("Existing user details:", user)
 }
 
 func main() {
@@ -61,49 +62,50 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/users", patchUser).Methods("PATCH")
+	
+	// go routine to send patch request
+	go func() {
+		cmd := exec.Command("curl", "--location", "--request", "PATCH", "http://localhost:8080/users")
+		if err := cmd.Run(); err != nil {
+			log.Println("go(): exec command run error:", err)
+		}
 
-	log.Println("Listening and Serving @8080...")
+	}()
+
 	log.Fatal(http.ListenAndServe(":8080", router))
-
 }
 
 func patchUser(w http.ResponseWriter, r *http.Request) {
 	updateInput := map[string]interface{}{
 		"name": "test_01_testing",
 	}
-	updatedUser, err := patch(w, r, idConst, updateInput)
-	if err != nil {
-		http.Error(w, "error patching user", http.StatusInternalServerError)
+
+	// batch commit method
+	batch := dbClient.Batch()
+	batch.Set(dbClient.Collection(collectionName).Doc(id), updateInput, firestore.MergeAll)
+	if _, err := batch.Commit(ctx); err != nil {
+		http.Error(w, "patchUser: batch commit error", http.StatusInternalServerError)
+		return
 	}
+
+	// get updated user details
+	doc, err := dbClient.Collection(collectionName).Doc(id).Get(r.Context())
+	if err != nil {
+		http.Error(w, "patchUser: get id error", http.StatusInternalServerError)
+		return
+	}
+	updatedUser := User{}
+	doc.DataTo(&updatedUser)
 	response, err := json.Marshal(updatedUser)
 	if err != nil {
-		http.Error(w, "error marshalling updatedUser", http.StatusInternalServerError)
+		http.Error(w, "updatedUser marshalling error", http.StatusInternalServerError)
 		return
 	}
 	if len(response) == 0 {
 		response = []byte("no record is returned")
 	}
+	log.Println("Updated user details:", updatedUser)
 
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(response)
-}
-
-func patch(w http.ResponseWriter, r *http.Request, id string, input map[string]interface{}) (User, error) {
-	// batch commit method
-	batch := dbClient.Batch()
-	docRef := dbClient.Collection(collectionName).Doc(id)
-	batch.Set(docRef, input, firestore.MergeAll)
-	if _, err := batch.Commit(ctx); err != nil {
-		return User{}, err
-	}
-
-	// return updated user details
-	updatedUser := User{}
-	doc, err := dbClient.Collection(collectionName).Doc(id).Get(ctx)
-	if err != nil {
-		return User{}, err
-	}
-	doc.DataTo(&updatedUser)
-
-	return updatedUser, nil
 }
