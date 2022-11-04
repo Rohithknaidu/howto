@@ -1,0 +1,31 @@
+# Welcome to Go presentation
+
+## display go code
+dsiplays the complete function
+
+.code hello.go
+
+## display just a function
+displays just main function
+
+.code hello.go /^func main/,/^}/
+
+
+## display just a piece of code
+displays just a desired piece of code
+
+.code hello.go /START OMIT/,/END OMIT/
+
+## run go program
+run hello world program
+
+.play hello.go
+
+
+
+## presenter notes
+normal notes
+
+: this is a presenter notes and should not be visible by default
+
+more normal notes
