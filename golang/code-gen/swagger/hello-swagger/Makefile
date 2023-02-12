@@ -1,6 +1,6 @@
 
 check_install:
-	which swagger || go install github.com/go-swagger/go-swagger/cmd/swagger
+	which swagger || go get github.com/go-swagger/go-swagger/cmd/swagger || go install github.com/go-swagger/go-swagger/cmd/swagger
 
 validate:
 	swagger validate ./swagger.yml

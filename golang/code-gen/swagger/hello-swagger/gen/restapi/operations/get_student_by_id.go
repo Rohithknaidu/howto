@@ -29,7 +29,7 @@ func NewGetStudentByID(ctx *middleware.Context, handler GetStudentByIDHandler) *
 	return &GetStudentByID{Context: ctx, Handler: handler}
 }
 
-/*GetStudentByID swagger:route GET /api/students/{id} getStudentById
+/* GetStudentByID swagger:route GET /api/students/{id} getStudentById
 
 GetStudentByID get student by ID API
 
@@ -42,17 +42,15 @@ type GetStudentByID struct {
 func (o *GetStudentByID) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
-		r = rCtx
+		*r = *rCtx
 	}
 	var Params = NewGetStudentByIDParams()
-
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
 	res := o.Handler.Handle(Params) // actually handle the request
-
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
 }

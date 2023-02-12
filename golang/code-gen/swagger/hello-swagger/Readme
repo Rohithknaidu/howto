@@ -1,8 +1,13 @@
-demonstrating generating go server code (without main) using go-swagger
+#demonstrating generating go server code (without main) using go-swagger
 
 Note: once the code is generated, the main function and the handlers implementation is hand coded.
 
-swagger code gen server steps:
+## installing swagger cli 
+```
+    make check_install
+```
+
+## swagger code gen server steps:
 1) swagger specs
     see: swagger.yml
 2) generate code:
@@ -15,6 +20,6 @@ swagger code gen server steps:
 
 
 
-references:
+## references:
 - https://www.youtube.com/watch?v=07XhTqE-j8k
 - https://github.com/iporsut/todo-list-swagger
