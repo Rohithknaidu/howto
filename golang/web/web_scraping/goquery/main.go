@@ -26,7 +26,7 @@ func main() {
 	// Find the review items
 	doc.Find("#saleBar").Each(func(i int, s *goquery.Selection) {
 		// For each item found, get the name.
-		name := s.Find("p").Text()
+		name := s.Find("p.node").Text()
 		fmt.Println(i, name)
 	})
 
